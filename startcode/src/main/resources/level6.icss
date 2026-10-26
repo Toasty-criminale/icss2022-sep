@@ -1,0 +1,8 @@
+p {
+    LocalWidth := 100px;
+    width: LocalWidth;
+}
+
+a {
+    width: LocalWidth;
+}

@@ -1,0 +1,15 @@
+Width := 100px;
+Extra := 20px;
+Active := TRUE;
+
+p {
+    width: Width + Extra * 2;
+
+    if [Active] {
+        color: #ff0000;
+    } else {
+        color: #000000;
+    }
+
+    height: 50%;
+}
