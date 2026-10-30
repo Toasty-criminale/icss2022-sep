@@ -1,0 +1,16 @@
+Active := TRUE;
+Hidden := FALSE;
+
+p {
+    if [!Active] {
+        color: #ff0000;
+    } else {
+        color: #00ff00;
+    }
+
+    if [!Hidden] {
+        width: 100px;
+    } else {
+        width: 1px;
+    }
+}

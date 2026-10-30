@@ -1,0 +1,63 @@
+Global := 100px;
+IsEnabled := TRUE;
+HexColor := #112233;
+OtherColor := #aabbcc;
+
+p {
+    width: MissingWidth;
+    height: NotDefined;
+
+    width: 10px + 20%;
+    height: 30px - 10%;
+    width: 2px * 3px;
+    height: 2 + 5px;
+    width: IsEnabled * 2;
+    height: TRUE - FALSE;
+
+    color: HexColor + 10px;
+    background-color: #ffffff * 2;
+
+    color: 30px;
+    background-color: 20%;
+    height: TRUE;
+    width: HexColor;
+    opacity: 50%;
+
+    if [20px] { width: 1px; }
+    if [Global] { height: 2px; }
+    if [HexColor] { color: #ff0000; }
+
+    if [Global > 50%] { width: 3px; }
+    if [Global == 100%] { width: 4px; }
+    if [TRUE != 1] { color: #00ff00; }
+    if [10 == 10px] { height: 5px; }
+
+    if [TRUE < FALSE] { height: 6px; }
+    if [HexColor >= OtherColor] { color: #000000; }
+    if [FALSE <= TRUE] { width: 7px; }
+
+    if [!Global] { width: 8px; }
+    if [!HexColor] { color: #123abc; }
+    if [!(10px + 1px)] { width: 9px; }
+    if [!!20%] { height: 10%; }
+
+    if [IsEnabled] {
+        BranchOnly := 20px;
+    } else {
+        ElseOnly := 30px;
+    }
+    width: BranchOnly;
+    height: ElseOnly;
+
+    RuleOnly := 15px;
+}
+
+#other {
+    width: RuleOnly;
+    width: BranchOnly;
+}
+
+.late {
+    width: Later;
+}
+Later := 5px;

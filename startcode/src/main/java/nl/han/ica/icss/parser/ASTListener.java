@@ -4,13 +4,12 @@ import nl.han.ica.datastructures.HANStack;
 import nl.han.ica.datastructures.IHANStack;
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
-import nl.han.ica.icss.ast.operations.AddOperation;
-import nl.han.ica.icss.ast.operations.MultiplyOperation;
-import nl.han.ica.icss.ast.operations.SubtractOperation;
-import nl.han.ica.icss.ast.selectors.ClassSelector;
-import nl.han.ica.icss.ast.selectors.IdSelector;
-import nl.han.ica.icss.ast.selectors.TagSelector;
 import org.antlr.v4.runtime.ParserRuleContext;
+import nl.han.ica.icss.ast.operations.*;
+import nl.han.ica.icss.ast.selectors.*;
+import nl.han.ica.icss.ast.NotOperation;
+import nl.han.ica.icss.ast.ComparisonOperation;
+import nl.han.ica.icss.ast.Expression;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -72,7 +71,8 @@ public class ASTListener extends ICSSBaseListener {
     public void exitAtom(ICSSParser.AtomContext ctx) {
         Expression value;
         String text = ctx.getText();
-        if (ctx.PIXELSIZE() != null) value = new PixelLiteral(text);
+        if (ctx.expression() != null) value = expressions.get(ctx.expression());
+        else if (ctx.PIXELSIZE() != null) value = new PixelLiteral(text);
         else if (ctx.PERCENTAGE() != null) value = new PercentageLiteral(text);
         else if (ctx.SCALAR() != null) value = new ScalarLiteral(text);
         else if (ctx.COLOR() != null) value = new ColorLiteral(text);
@@ -82,29 +82,80 @@ public class ASTListener extends ICSSBaseListener {
     }
 
     @Override
+    public void exitUnary(ICSSParser.UnaryContext ctx) {
+        if (ctx.NOT() != null) {
+            NotOperation not = new NotOperation();
+            not.addChild(expressions.get(ctx.unary()));
+            expressions.put(ctx, not);
+        } else {
+            expressions.put(ctx, expressions.get(ctx.atom()));
+        }
+    }
+
+    @Override
     public void exitTerm(ICSSParser.TermContext ctx) {
-        Expression result = expressions.get(ctx.atom(0));
-        for (int index = 1; index < ctx.atom().size(); index++) {
+        Expression result = expressions.get(ctx.unary(0));
+        for (int index = 1; index < ctx.unary().size(); index++) {
             MultiplyOperation multiply = new MultiplyOperation();
             multiply.addChild(result);
-            multiply.addChild(expressions.get(ctx.atom(index)));
+            multiply.addChild(expressions.get(ctx.unary(index)));
             result = multiply;
         }
         expressions.put(ctx, result);
     }
 
     @Override
-    public void exitExpression(ICSSParser.ExpressionContext ctx) {
+    public void exitAddition(ICSSParser.AdditionContext ctx) {
         Expression result = expressions.get(ctx.term(0));
         for (int index = 1; index < ctx.term().size(); index++) {
-            Operation operation;
-            if (ctx.addOperator(index - 1).PLUS() != null) operation = new AddOperation();
-            else operation = new SubtractOperation();
+            Operation operation = ctx.addOperator(index - 1).PLUS() != null
+                    ? new AddOperation() : new SubtractOperation();
             operation.addChild(result);
             operation.addChild(expressions.get(ctx.term(index)));
             result = operation;
         }
         expressions.put(ctx, result);
+    }
+
+    @Override
+    public void exitComparison(ICSSParser.ComparisonContext ctx) {
+        Expression result = expressions.get(ctx.addition(0));
+        if (ctx.comparisonOperator() != null) {
+            String symbol = ctx.comparisonOperator().getText();
+            ComparisonOperation.Operator operator;
+            switch (symbol) {
+                case ">":
+                    operator = ComparisonOperation.Operator.GREATER;
+                    break;
+                case "<":
+                    operator = ComparisonOperation.Operator.LESS;
+                    break;
+                case ">=":
+                    operator = ComparisonOperation.Operator.GREATER_EQUAL;
+                    break;
+                case "<=":
+                    operator = ComparisonOperation.Operator.LESS_EQUAL;
+                    break;
+                case "==":
+                    operator = ComparisonOperation.Operator.EQUAL;
+                    break;
+                case "!=":
+                    operator = ComparisonOperation.Operator.NOT_EQUAL;
+                    break;
+                default:
+                    throw new IllegalStateException("Onbekende operator: " + symbol);
+            }
+            ComparisonOperation comparison = new ComparisonOperation(operator);
+            comparison.addChild(result);
+            comparison.addChild(expressions.get(ctx.addition(1)));
+            result = comparison;
+        }
+        expressions.put(ctx, result);
+    }
+
+    @Override
+    public void exitExpression(ICSSParser.ExpressionContext ctx) {
+        expressions.put(ctx, expressions.get(ctx.comparison()));
     }
 
     @Override
@@ -147,5 +198,4 @@ public class ASTListener extends ICSSBaseListener {
     public void exitElseClause(ICSSParser.ElseClauseContext ctx) {
         currentContainer.pop();
     }
-
 }

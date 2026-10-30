@@ -1,0 +1,73 @@
+BaseWidth := 100px;
+Gap := 20px;
+Scale := 2;
+Percent := 40%;
+ColorA := #112233;
+ColorB := #aabbcc;
+Enabled := TRUE;
+Disabled := FALSE;
+SameColor := ColorA == #112233;
+DifferentColor := ColorA != ColorB;
+IsWide := BaseWidth + Gap * Scale >= 140px;
+IsNarrow := BaseWidth < 50px;
+CanShow := !Disabled;
+
+#dashboard {
+    width: (BaseWidth + Gap) * Scale;
+    height: 80% - Percent;
+    color: ColorA;
+    background-color: ColorB;
+
+    InnerGap := 5px;
+    if [IsWide] {
+        width: BaseWidth + InnerGap * Scale;
+        if [!(BaseWidth > 200px)] {
+            color: #00ff00;
+        } else {
+            color: #ff0000;
+        }
+    } else {
+        width: 1px;
+    }
+
+    if [Enabled == !Disabled] {
+        height: (10 + 5) * 2%;
+    } else {
+        height: 1%;
+    }
+}
+
+p {
+    if [BaseWidth > Gap] { width: BaseWidth + Gap; } else { width: 1px; }
+    if [BaseWidth <= 100px] { height: 15%; } else { height: 2%; }
+    if [BaseWidth >= 100px] { color: ColorA; } else { color: #ff0000; }
+    if [BaseWidth != Gap] { background-color: ColorB; }
+    if [BaseWidth == 100px] { width: 100px; }
+    if [BaseWidth < 300px] { height: 30%; }
+    if [CanShow] { color: #123abc; }
+}
+
+.card {
+    LocalWidth := 30px;
+    if [LocalWidth > 20px] {
+        LocalWidth := LocalWidth + 10px;
+    } else {
+        LocalWidth := 1px;
+    }
+    width: LocalWidth;
+    if [DifferentColor] { background-color: ColorA; }
+    else { background-color: ColorB; }
+    if [!IsNarrow] { height: 55%; }
+    if [FALSE] { color: #ff0000; }
+    if [SameColor] { color: ColorB; }
+}
+
+#footer {
+    width: 2 * 25px;
+    height: 90% - 15% + 5%;
+    if [50% > Percent] { color: #00ff00; }
+    else { color: #ff0000; }
+    if [Scale == 2] { background-color: #010203; }
+    else { background-color: #eeeeee; }
+    if [TRUE != FALSE] { height: 60%; }
+}

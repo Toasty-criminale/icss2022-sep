@@ -3,16 +3,10 @@ package nl.han.ica.icss.transforms;
 import nl.han.ica.datastructures.HANLinkedList;
 import nl.han.ica.datastructures.IHANLinkedList;
 import nl.han.ica.icss.ast.*;
-import nl.han.ica.icss.ast.literals.PercentageLiteral;
-import nl.han.ica.icss.ast.literals.PixelLiteral;
-import nl.han.ica.icss.ast.literals.ScalarLiteral;
-import nl.han.ica.icss.ast.literals.BoolLiteral;
-import nl.han.ica.icss.ast.operations.AddOperation;
-import nl.han.ica.icss.ast.operations.MultiplyOperation;
-import nl.han.ica.icss.ast.operations.SubtractOperation;
-
 import java.util.ArrayList;
 import java.util.HashMap;
+import nl.han.ica.icss.ast.literals.*;
+import nl.han.ica.icss.ast.operations.*;
 
 public class Evaluator implements Transform {
 
@@ -103,6 +97,16 @@ public class Evaluator implements Transform {
         if (expression instanceof VariableReference) {
             return lookup(((VariableReference) expression).name);
         }
+        if (expression instanceof NotOperation) {
+            Literal operand = calculate(((NotOperation) expression).operand);
+            if (!(operand instanceof BoolLiteral)) {
+                throw new IllegalStateException("! vereist een boolean");
+            }
+            return new BoolLiteral(!((BoolLiteral) operand).value);
+        }
+        if (expression instanceof ComparisonOperation) {
+            return calculateComparison((ComparisonOperation) expression);
+        }
         if (!(expression instanceof Operation)) {
             throw new IllegalStateException("Niet ondersteunde expressie: " + expression.getNodeLabel());
         }
@@ -121,6 +125,49 @@ public class Evaluator implements Transform {
         throw new IllegalStateException("Ongeldige operatie; eerst Checker uitvoeren");
     }
 
+    private BoolLiteral calculateComparison(ComparisonOperation comparison) {
+        Literal left = calculate(comparison.lhs);
+        Literal right = calculate(comparison.rhs);
+        boolean equal;
+        int order = 0;
+
+        if (left instanceof BoolLiteral && right instanceof BoolLiteral) {
+            equal = ((BoolLiteral) left).value == ((BoolLiteral) right).value;
+        } else if (left instanceof ColorLiteral && right instanceof ColorLiteral) {
+            equal = ((ColorLiteral) left).value.equals(((ColorLiteral) right).value);
+        } else {
+            int a = number(left);
+            int b = number(right);
+            equal = a == b;
+            order = Integer.compare(a, b);
+        }
+
+        boolean result;
+        switch (comparison.operator) {
+            case GREATER:
+                result = order > 0;
+                break;
+            case LESS:
+                result = order < 0;
+                break;
+            case GREATER_EQUAL:
+                result = order >= 0;
+                break;
+            case LESS_EQUAL:
+                result = order <= 0;
+                break;
+            case EQUAL:
+                result = equal;
+                break;
+            case NOT_EQUAL:
+                result = !equal;
+                break;
+            default:
+                throw new IllegalStateException("Onbekende vergelijking");
+        }
+        return new BoolLiteral(result);
+    }
+
     private int number(Literal literal) {
         if (literal instanceof PixelLiteral) return ((PixelLiteral) literal).value;
         if (literal instanceof PercentageLiteral) return ((PercentageLiteral) literal).value;
@@ -134,6 +181,4 @@ public class Evaluator implements Transform {
         if (template instanceof ScalarLiteral) return new ScalarLiteral(value);
         throw new IllegalStateException("Ongeldige numerieke eenheid");
     }
-
-
 }

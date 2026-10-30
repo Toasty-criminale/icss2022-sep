@@ -40,13 +40,21 @@ PLUS: '+';
 MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
+GREATER_EQUAL: '>=';
+LESS_EQUAL: '<=';
+EQUAL: '==';
+NOT_EQUAL: '!=';
+GREATER: '>';
+LESS: '<';
+NOT: '!';
+OPEN_PAREN: '(';
+CLOSE_PAREN: ')';
 
 
 
 
 //--- PARSER: ---
 stylesheet: (variableAssignment | stylerule)* EOF;
-
 stylerule: selector OPEN_BRACE ruleStatement* CLOSE_BRACE;
 selector: LOWER_IDENT | ID_IDENT | CLASS_IDENT;
 ruleStatement: declaration | variableAssignment | ifClause;
@@ -55,9 +63,14 @@ variableAssignment: CAPITAL_IDENT ASSIGNMENT_OPERATOR expression SEMICOLON;
 ifClause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE
           OPEN_BRACE ruleStatement* CLOSE_BRACE elseClause?;
 elseClause: ELSE OPEN_BRACE ruleStatement* CLOSE_BRACE;
-expression: term (addOperator term)*;
+expression: comparison;
+comparison: addition (comparisonOperator addition)?;
+comparisonOperator: GREATER | LESS | GREATER_EQUAL | LESS_EQUAL | EQUAL | NOT_EQUAL;
+addition: term (addOperator term)*;
 addOperator: PLUS | MIN;
-term: atom (MUL atom)*;
-atom: PIXELSIZE | PERCENTAGE | SCALAR | COLOR | TRUE | FALSE | CAPITAL_IDENT;
+term: unary (MUL unary)*;
+unary: NOT unary | atom;
+atom: PIXELSIZE | PERCENTAGE | SCALAR | COLOR | TRUE | FALSE | CAPITAL_IDENT
+    | OPEN_PAREN expression CLOSE_PAREN;
 
 

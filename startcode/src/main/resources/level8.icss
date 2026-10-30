@@ -1,0 +1,72 @@
+Width := 120px;
+MinWidth := 100px;
+MaxWidth := 150px;
+Progress := 75%;
+Minimum := 50%;
+Attempts := 4;
+Limit := 4;
+Active := TRUE;
+ColorA := #112233;
+ColorB := #aabbcc;
+
+#comparisons {
+    if [Width > MinWidth] {
+        color: #00ff00;
+    } else {
+        color: #ff0000;
+    }
+
+    if [Width < MaxWidth] {
+        width: 120px;
+    } else {
+        width: 1px;
+    }
+
+    if [Width >= 120px] {
+        height: 30%;
+    } else {
+        height: 1%;
+    }
+
+    if [Progress <= 75%] {
+        background-color: ColorA;
+    } else {
+        background-color: ColorB;
+    }
+
+    if [Attempts == Limit] {
+        width: 40px;
+    } else {
+        width: 2px;
+    }
+
+    if [Attempts != 5] {
+        height: 50%;
+    } else {
+        height: 2%;
+    }
+}
+
+p {
+    if [Progress > Minimum] {
+        width: Progress;
+    }
+
+    if [ColorA != ColorB] {
+        color: ColorB;
+    }
+
+    if [ColorA == #112233] {
+        background-color: ColorA;
+    }
+
+    if [Active == TRUE] {
+        height: 10px;
+    }
+
+    if [Width < MinWidth] {
+        color: #ff0000;
+    } else {
+        color: #00ff00;
+    }
+}

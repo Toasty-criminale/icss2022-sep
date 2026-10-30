@@ -4,14 +4,10 @@ import nl.han.ica.datastructures.HANLinkedList;
 import nl.han.ica.datastructures.IHANLinkedList;
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
-import nl.han.ica.icss.ast.operations.AddOperation;
-import nl.han.ica.icss.ast.operations.MultiplyOperation;
-import nl.han.ica.icss.ast.operations.SubtractOperation;
+import nl.han.ica.icss.ast.operations.*;
 import nl.han.ica.icss.ast.types.ExpressionType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-
 
 public class Checker {
 
@@ -106,6 +102,38 @@ public class Checker {
         if (!valid) declaration.setError("Ongeldige type/property-combinatie: " + property);
     }
 
+    private ExpressionType comparisonType(ComparisonOperation comparison) {
+        ExpressionType left = typeOf(comparison.lhs);
+        ExpressionType right = typeOf(comparison.rhs);
+        if (left == ExpressionType.UNDEFINED || right == ExpressionType.UNDEFINED) {
+            return ExpressionType.UNDEFINED;
+        }
+        if (left != right) {
+            comparison.setError("Vergelijkingen vereisen gelijke types");
+            return ExpressionType.UNDEFINED;
+        }
+        boolean numeric = left == ExpressionType.PIXEL ||
+                left == ExpressionType.PERCENTAGE ||
+                left == ExpressionType.SCALAR;
+        switch (comparison.operator) {
+            case GREATER:
+            case LESS:
+            case GREATER_EQUAL:
+            case LESS_EQUAL:
+                if (!numeric) {
+                    comparison.setError("<, >, <= en >= vereisen numerieke waardes");
+                    return ExpressionType.UNDEFINED;
+                }
+                return ExpressionType.BOOL;
+            case EQUAL:
+            case NOT_EQUAL:
+                return ExpressionType.BOOL;
+            default:
+                comparison.setError("Onbekende vergelijking");
+                return ExpressionType.UNDEFINED;
+        }
+    }
+
     private ExpressionType typeOf(Expression expression) {
         if (expression instanceof PixelLiteral) return ExpressionType.PIXEL;
         if (expression instanceof PercentageLiteral) return ExpressionType.PERCENTAGE;
@@ -115,6 +143,19 @@ public class Checker {
         if (expression instanceof VariableReference) {
             VariableReference reference = (VariableReference) expression;
             return getVariableType(reference.name, reference);
+        }
+        if (expression instanceof NotOperation) {
+            NotOperation not = (NotOperation) expression;
+            ExpressionType operandType = typeOf(not.operand);
+            if (operandType == ExpressionType.UNDEFINED) return ExpressionType.UNDEFINED;
+            if (operandType != ExpressionType.BOOL) {
+                not.setError("! mag alleen voor Boolean (BOOL) worden gebruikt");
+                return ExpressionType.UNDEFINED;
+            }
+            return ExpressionType.BOOL;
+        }
+        if (expression instanceof ComparisonOperation) {
+            return comparisonType((ComparisonOperation) expression);
         }
         if (expression instanceof Operation) {
             Operation operation = (Operation) expression;
